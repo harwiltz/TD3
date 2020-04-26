@@ -83,8 +83,8 @@ class TD3(object):
                 policy_freq=2
         ):
 
-                max_action = torch.from_numpy(max_action)
-                min_action = torch.from_numpy(min_action)
+                max_action = torch.from_numpy(max_action).to(device)
+                min_action = torch.from_numpy(min_action).to(device)
                 self.actor = Actor(state_dim, action_dim, max_action, min_action=min_action).to(device)
                 self.actor_target = copy.deepcopy(self.actor)
                 self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=3e-4)
