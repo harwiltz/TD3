@@ -1,6 +1,7 @@
+import gym
 import numpy as np
 
-from sac.replay import ReplayBuffer
+from td3.utils import ReplayBuffer
 
 from td3.TD3 import TD3
 
@@ -25,6 +26,10 @@ class TD3Agent:
         env = self._env_fn()
         self._obs_dim = np.prod(env.observation_space.shape)
         self._act_dim = np.prod(env.action_space.shape)
+        self._training = False
+        self._total_steps = 0
+        self._pre_train_steps = pre_train_steps
+        self._batch_size = batch_size
         max_action = env.action_space.high
         min_action = env.action_space.low
         self._replay_buf = ReplayBuffer(self._obs_dim, self._act_dim, max_replay_capacity)
@@ -36,7 +41,7 @@ class TD3Agent:
                         tau=tau,
                         policy_freq=value_delay)
 
-    def rollout(self, num_rollout=1, render=False):
+    def rollout(self, num_rollouts=1, render=False):
         rewards = np.zeros(num_rollouts)
         for i in range(num_rollouts):
             env = self._env_fn()
@@ -69,7 +74,7 @@ class TD3Agent:
                 a = env.action_space.sample()
             ns, r, d, _ = env.step(a)
             episode_reward += r
-            self._replay_buf.store(s, a, r, ns, d)
+            self._replay_buf.add(s, a, ns, r, d)
             self._total_steps += 1
             if not self._training:
                 if self._total_steps >= self._pre_train_steps:

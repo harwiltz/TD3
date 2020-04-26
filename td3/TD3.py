@@ -83,6 +83,8 @@ class TD3(object):
                 policy_freq=2
         ):
 
+                max_action = torch.from_numpy(max_action)
+                min_action = torch.from_numpy(min_action)
                 self.actor = Actor(state_dim, action_dim, max_action, min_action=min_action).to(device)
                 self.actor_target = copy.deepcopy(self.actor)
                 self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=3e-4)
@@ -122,9 +124,9 @@ class TD3(object):
                                 torch.randn_like(action) * self.policy_noise
                         ).clamp(-self.noise_clip, self.noise_clip)
 
-                        next_action = (
-                                self.actor_target(next_state) + noise
-                        ).clamp(self.min_action, self.max_action)
+                        next_action = torch.max(
+                                torch.min(self.actor_target(next_state) + noise, self.max_action),
+                                self.min_action)
 
                         # Compute the target Q value
                         target_Q1, target_Q2 = self.critic_target(next_state, next_action)
